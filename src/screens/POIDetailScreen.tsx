@@ -150,7 +150,7 @@ const POIDetailScreen: React.FC<POIDetailScreenProps> = ({
   return (
     <div className="app-container">
       <Header 
-        title="POI Detail" 
+        title={location.name}
         showBackButton 
         onBackClick={onBack}
       />
