@@ -88,7 +88,7 @@ export const fetchHistoricPlacesFromGoogleServer = async (
       key: apiKey
     });
 
-    console.log('Fetching historic places from Google Places API:', { latitude, longitude });
+    //console.log('Fetching historic places from Google Places API:', { latitude, longitude });
 
     const response = await fetch(`${baseUrl}?${params}`);
 
@@ -97,7 +97,7 @@ export const fetchHistoricPlacesFromGoogleServer = async (
     }
 
     const data: GooglePlacesApiResponse = await response.json();
-    console.log('Google Places API Response status:', data.status);
+    //console.log('Google Places API Response status:', data.status);
 
     if (data.status !== 'OK') {
       console.error('Google Places API error:', data.error_message || data.status);
@@ -132,7 +132,7 @@ export const fetchHistoricPlacesFromGoogleServer = async (
       return hasHistoricType || hasHistoricKeyword;
     });
 
-    console.log(`Found ${historicPlaces.length} historic places out of ${data.results.length} total results`);
+    //console.log(`Found ${historicPlaces.length} historic places out of ${data.results.length} total results`);
 
     // Convert to our Location format
     const locations = historicPlaces.map(place => convertGooglePlaceToLocation(place, latitude, longitude));

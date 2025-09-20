@@ -15,116 +15,11 @@ const navigationItems: NavigationItem[] = [
   { id: 'profile', label: 'Profile', icon: 'profile', path: '/profile' },
 ];
 
-// Interface for the API response
-interface NearbyPOIResponse {
-  poi_id: string;
-  canonical_name: string;
-  short_description: string;
-  city: string;
-  state: string;
-  country: string;
-  tags: string;
-  published: boolean;
-  distance_meters: number;
-  content_id: string | null;
-  content_variant: string | null;
-  content_text: string | null;
-  audio_id: string | null;
-  audio_url: string | null;
-  audio_duration_seconds: number | null;
-  audio_language: string | null;
-  video_id: string | null;
-  video_url: string | null;
-  video_duration_seconds: number | null;
-  video_language: string | null;
-  parent_poi_id: string | null; // Added parent_poi_id field
-}
-
-// Convert API response to our Location interface
-const convertPOIToLocation = (poi: NearbyPOIResponse): Location => {
-  return {
-    id: poi.poi_id,
-    name: poi.canonical_name,
-    description: poi.short_description,
-    latitude: 17.3848, // From hardcoded coordinates
-    longitude: 78.4024, // From hardcoded coordinates
-    imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop', // Default image
-    audioUrl: poi.audio_url || undefined,
-    audioTitle: poi.audio_id ? `Audio Guide - ${poi.canonical_name}` : undefined,
-    audioDuration: poi.audio_duration_seconds ? `${Math.floor(poi.audio_duration_seconds / 60)}:${String(poi.audio_duration_seconds % 60).padStart(2, '0')}` : undefined,
-    category: 'heritage', // Default category
-    distance: `${Math.round(poi.distance_meters)}m`
-  };
-};
-
-// Fetch key locations from the real API
-const fetchKeyLocationsFromAPI = async (currentPOIId?: string): Promise<Location[]> => {
-  try {
-    // Hardcoded payload as requested
-    const payload = {
-      latitude: "17.3848",
-      longitude: "78.4024", 
-      radiusMeters: "500",
-      maxResults: 10
-    };
-
-    console.log('Fetching key locations with payload:', payload);
-
-    const response = await fetch('https://roamrelicaapi.politeground-71fcc535.eastus2.azurecontainerapps.io/poi/getNearByPOI', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data: NearbyPOIResponse[] = await response.json();
-    console.log('API Response:', data);
-    
-    // Filter out the current POI if its poi_id matches parent_poi_id in any of the results
-    // Also filter out any POI that has the same poi_id as the current POI we're viewing
-    const filteredData = data.filter(poi => {
-      // Skip if this POI's ID matches the current POI we're viewing
-      if (currentPOIId && poi.poi_id === currentPOIId) {
-        console.log(`Filtering out current POI: ${poi.canonical_name} (${poi.poi_id})`);
-        return false;
-      }
-      
-      // Skip if this POI's parent_poi_id matches the current POI we're viewing
-      if (currentPOIId && poi.parent_poi_id === currentPOIId) {
-        console.log(`Filtering out POI with parent_poi_id matching current POI: ${poi.canonical_name} (parent: ${poi.parent_poi_id})`);
-        return false;
-      }
-      
-      return true;
-    });
-    
-    console.log('Filtered POIs:', filteredData);
-    
-    // Convert API response to our Location format
-    const locations = filteredData.map(convertPOIToLocation);
-    console.log('Converted locations:', locations);
-    
-    return locations;
-
-  } catch (error) {
-    console.error('Error fetching key locations:', error);
-    // Return empty array as fallback
-    return [];
-  }
-};
-
 const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(null);
-  const [keyLocations, setKeyLocations] = useState<Location[]>([]);
-  const [loadingKeyLocations, setLoadingKeyLocations] = useState(false);
 
   // Get current active navigation item
   const getActiveNavItem = (pathname: string): string => {
@@ -137,23 +32,10 @@ const AppContent: React.FC = () => {
     navigate(item.path);
   };
 
-  // Handle location selection from map
+  // Handle location selection from map  
   const handleLocationSelect = async (location: Location) => {
     setSelectedLocation(location);
-    setLoadingKeyLocations(true);
-    
-    try {
-      // Fetch key locations from the real API, passing the current POI ID to filter it out
-      const keyLocs = await fetchKeyLocationsFromAPI(location.id);
-      setKeyLocations(keyLocs);
-      console.log('Key locations loaded (filtered):', keyLocs);
-    } catch (error) {
-      console.error('Failed to load key locations:', error);
-      setKeyLocations([]); // Fallback to empty array
-    } finally {
-      setLoadingKeyLocations(false);
-    }
-    
+    // Removed key locations API call - now handled in POIDetailScreen with Azure OpenAI
     navigate(`/location/${location.id}`);
   };
 
@@ -175,17 +57,15 @@ const AppContent: React.FC = () => {
     navigate('/audio');
   };
 
-  // Handle key locations view
+  // Handle key locations view - Updated for Azure OpenAI integration
   const handleViewKeyLocations = (location: Location) => {
-    // In a real app, this would navigate to a key locations screen
-    console.log('Viewing key locations for:', location.name);
-    alert(`Viewing key locations within ${location.name}. Found ${keyLocations.length} nearby POIs from the API.`);
+    //console.log('Key locations are now handled within POI Detail screen via Azure OpenAI');
   };
 
   // Handle civic action selection
   const handleCivicActionSelect = (action: CivicAction) => {
     // In a real app, this would handle the specific action
-    console.log('Civic action selected:', action);
+    //console.log('Civic action selected:', action);
     
     // For demo purposes, show an alert
     switch (action.type) {
@@ -261,17 +141,7 @@ const AppContent: React.FC = () => {
                   icon: '📝'
                 })}
                 onViewKeyLocations={handleViewKeyLocations}
-                keyLocations={keyLocations}
               />
-            ) : loadingKeyLocations ? (
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                height: '100vh' 
-              }}>
-                Loading location details and nearby POIs...
-              </div>
             ) : (
               <div>Location not found</div>
             )

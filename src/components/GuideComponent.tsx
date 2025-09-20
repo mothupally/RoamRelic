@@ -60,7 +60,7 @@ Greet the user and start providing details about "${touristPlace}"`;
 
   const logMessage = useCallback((message: string): void => {
     setLogs((prev) => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
-    console.log(message);
+    //console.log(message);
   }, []);
 
   const StartSession = async (): Promise<void> => {
@@ -145,7 +145,7 @@ Greet the user and start providing details about "${touristPlace}"`;
   const updateSession = (): void => {
     const dc = dataChannelRef.current;
     if (!dc || dc.readyState !== "open") return;
-    console.log("Updating session with instructions:", system_instructions);    
+    //console.log("Updating session with instructions:", system_instructions);    
     const event: SessionUpdateEvent = { 
       type: "session.update", 
       session: { instructions: system_instructions } 

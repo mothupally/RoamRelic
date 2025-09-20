@@ -24,6 +24,32 @@ export interface Location {
   };
 }
 
+export interface KeyLocation {
+  name: string;
+  description: string;
+}
+
+export interface CivicEngagement {
+  title: string;
+  description: string;
+  year: string;
+  type: string;
+}
+
+export interface CurrentOpportunity {
+  title: string;
+  description: string;
+  type: string;
+  link: string;
+}
+
+export interface HistoricalInsights {
+  landmark: string;
+  keyLocations: KeyLocation[];
+  civicEngagements: CivicEngagement[];
+  currentOpportunities: CurrentOpportunity[];
+}
+
 export interface CivicAction {
   id: string;
   title: string;

@@ -54,58 +54,76 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 export const convertGooglePlaceToLocation = (place: GooglePlaceResponse, userLat: number, userLng: number): Location => {
   const distance = calculateDistance(userLat, userLng, place.geometry.location.lat, place.geometry.location.lng);
 
-  // Extract richer description from Google Places data
-  const buildRichDescription = (place: GooglePlaceResponse): string => {
-    let description = place.formatted_address || place.vicinity || 'Historic location discovered via Google Places';
+  // Create a proper description for the place
+  const buildPlaceDescription = (place: GooglePlaceResponse): string => {
+    // Use a proper description based on place type and name
+    const placeTypes = place.types || [];
     
-    // Add rating information if available
-    if (place.rating && place.user_ratings_total) {
-      description += `\n\n? Rated ${place.rating}/5 by ${place.user_ratings_total.toLocaleString()} visitors`;
+    let description = '';
+    
+    if (placeTypes.includes('tourist_attraction') || placeTypes.includes('museum')) {
+      description = `${place.name} is a renowned heritage site and tourist destination. `;
+    } else if (placeTypes.includes('place_of_worship') || placeTypes.includes('hindu_temple')) {
+      description = `${place.name} is a sacred place of worship with rich cultural and spiritual significance. `;
+    } else if (placeTypes.includes('historical_landmark')) {
+      description = `${place.name} is a historical landmark that showcases the architectural heritage and cultural legacy of the region. `;
+    } else {
+      description = `${place.name} is a significant heritage site that represents the cultural and historical importance of this area. `;
     }
     
-    // Add business status
-    if (place.business_status) {
-      const statusText = place.business_status === 'OPERATIONAL' ? '? Currently open' : 
-                        place.business_status === 'CLOSED_TEMPORARILY' ? '?? Temporarily closed' :
-                        place.business_status === 'CLOSED_PERMANENTLY' ? '? Permanently closed' : '';
-      if (statusText) {
-        description += `\n${statusText}`;
+    // Add location context
+    if (place.vicinity) {
+      description += `Located in ${place.vicinity}, `;
+    } else if (place.formatted_address) {
+      const addressParts = place.formatted_address.split(',');
+      if (addressParts.length > 1) {
+        description += `Located in ${addressParts[addressParts.length - 2].trim()}, `;
       }
     }
     
-    // Add opening hours if available
-    if (place.opening_hours?.open_now !== undefined) {
-      description += place.opening_hours.open_now ? '\n?? Open now' : '\n?? Closed now';
-    }
-    
-    // Add place types as tags
-    if (place.types && place.types.length > 0) {
-      const relevantTypes = place.types.filter(type => 
-        !type.includes('establishment') && 
-        !type.includes('point_of_interest') &&
-        !type.includes('geocode')
-      ).slice(0, 3);
-      
-      if (relevantTypes.length > 0) {
-        const tags = relevantTypes.map(type => 
-          type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-        ).join(' • ');
-        description += `\n\n??? ${tags}`;
-      }
-    }
+    description += `this site offers visitors a glimpse into the rich history and cultural traditions that have shaped this region over centuries.`;
     
     return description;
+  };
+
+  // Handle Google Places photos with CORS proxy - synchronous approach
+  const getImageUrl = (place: GooglePlaceResponse): string => {
+    if (place.photos && place.photos.length > 0) {
+      const apiKey = process.env.REACT_APP_GOOGLE_PLACES_API_KEY;
+      if (apiKey) {
+        // Use CORS proxy directly for photos - synchronous approach
+        const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${place.photos[0].photo_reference}&key=${apiKey}`;
+        
+        // Use cors-anywhere as primary proxy for images (works well for direct image URLs)
+        return `https://cors-anywhere.herokuapp.com/${photoUrl}`;
+      }
+    }
+    
+    // Fallback to contextual Unsplash images if no Google photo available
+    const placeTypes = place.types || [];
+    
+    if (placeTypes.includes('museum')) {
+      return 'https://images.unsplash.com/photo-1578495555443-d134c52754e7?w=400&h=300&fit=crop';
+    } else if (placeTypes.includes('place_of_worship') || placeTypes.includes('hindu_temple')) {
+      return 'https://images.unsplash.com/photo-1583224964938-0c17db9e623a?w=400&h=300&fit=crop';
+    } else if (placeTypes.includes('historical_landmark') || place.name.toLowerCase().includes('fort')) {
+      return 'https://images.unsplash.com/photo-1566127952889-bf906f4e4c5d?w=400&h=300&fit=crop';
+    } else if (place.name.toLowerCase().includes('palace')) {
+      return 'https://images.unsplash.com/photo-1545042746-d0a8b69e5e22?w=400&h=300&fit=crop';
+    } else if (place.name.toLowerCase().includes('charminar')) {
+      return 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400&h=300&fit=crop';
+    } else {
+      return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop';
+    }
   };
 
   return {
     id: place.place_id,
     name: place.name,
-    description: buildRichDescription(place),
+    description: buildPlaceDescription(place),
     latitude: place.geometry.location.lat,
     longitude: place.geometry.location.lng,
-    imageUrl: place.photos && place.photos.length > 0 
-      ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${place.photos[0].photo_reference}&key=${process.env.REACT_APP_GOOGLE_PLACES_API_KEY}`
-      : 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
+    imageUrl: getImageUrl(place),
     audioUrl: undefined,
     audioTitle: undefined,
     audioDuration: undefined,
@@ -159,17 +177,17 @@ export const fetchHistoricPlacesWithCORS = async (
   latitude: number, 
   longitude: number
 ): Promise<Location[]> => {
-  console.log('??? Starting fetchHistoricPlacesWithCORS...', { latitude, longitude });
+  //console.log('??? Starting fetchHistoricPlacesWithCORS...', { latitude, longitude });
   
   try {
     const apiKey = process.env.REACT_APP_GOOGLE_PLACES_API_KEY;
     
-    console.log('?? API Key check:', apiKey ? 'Found' : 'NOT FOUND');
+    //console.log('?? API Key check:', apiKey ? 'Found' : 'NOT FOUND');
     
     if (!apiKey) {
       console.warn('?? Google Places API key not found. Using fallback data.');
       const fallbackData = getFallbackHistoricPlaces(latitude, longitude);
-      console.log('?? Returning fallback data:', fallbackData);
+      //console.log('?? Returning fallback data:', fallbackData);
       return fallbackData;
     }
 
@@ -197,7 +215,7 @@ export const fetchHistoricPlacesWithCORS = async (
       const corsProxy = corsProxies[i];
       
       try {
-        console.log(`?? Trying proxy ${i + 1}/${corsProxies.length}: ${corsProxy}`);
+        //console.log(`?? Trying proxy ${i + 1}/${corsProxies.length}: ${corsProxy}`);
         
         let fullUrl: string;
         let fetchOptions: RequestInit = {};
@@ -214,10 +232,10 @@ export const fetchHistoricPlacesWithCORS = async (
           };
         }
 
-        console.log(`?? Fetching from: ${fullUrl}`);
+        //console.log(`?? Fetching from: ${fullUrl}`);
         const response = await fetch(fullUrl, fetchOptions);
         
-        console.log(`?? Response status: ${response.status} ${response.statusText}`);
+        //console.log(`?? Response status: ${response.status} ${response.statusText}`);
 
         if (!response.ok) {
           console.warn(`?? Proxy ${i + 1} failed with status ${response.status}, trying next...`);
@@ -239,7 +257,7 @@ export const fetchHistoricPlacesWithCORS = async (
           data = await response.json();
         }
 
-        console.log('?? Google Places API Response:', data);
+        //console.log('?? Google Places API Response:', data);
 
         if (data.status !== 'OK') {
           console.error('? Google Places API error:', data.error_message || data.status);
@@ -248,11 +266,11 @@ export const fetchHistoricPlacesWithCORS = async (
 
         // Filter for historic/cultural places
         const historicPlaces = filterHistoricPlaces(data.results);
-        console.log(`?? Found ${historicPlaces.length} historic places out of ${data.results.length} total results`);
+        //console.log(`?? Found ${historicPlaces.length} historic places out of ${data.results.length} total results`);
 
         // Convert to our Location format
         const locations = historicPlaces.map(place => convertGooglePlaceToLocation(place, latitude, longitude));
-        console.log('? Converted locations:', locations);
+        //console.log('? Converted locations:', locations);
         
         return locations;
 
@@ -265,29 +283,29 @@ export const fetchHistoricPlacesWithCORS = async (
     // If all proxies failed, use fallback data
     console.warn('?? All CORS proxies failed, using fallback data');
     const fallbackData = getFallbackHistoricPlaces(latitude, longitude);
-    console.log('?? Returning fallback data due to proxy errors:', fallbackData);
+    //console.log('?? Returning fallback data due to proxy errors:', fallbackData);
     return fallbackData;
 
   } catch (error) {
     console.error('?? Error fetching historic places:', error);
     const fallbackData = getFallbackHistoricPlaces(latitude, longitude);
-    console.log('?? Returning fallback data due to error:', fallbackData);
+    //console.log('?? Returning fallback data due to error:', fallbackData);
     return fallbackData;
   }
 };
 
-// Fallback historic places for development/demo - Enhanced with rich data
+// Fallback historic places for development/demo - Enhanced with proper descriptions
 export const getFallbackHistoricPlaces = (latitude: number, longitude: number): Location[] => {
-  console.log('?? Generating fallback places for:', { latitude, longitude });
+  //console.log('?? Generating fallback places for:', { latitude, longitude });
   
   const fallbackPlaces: Location[] = [
     {
       id: 'fallback-historic-1',
       name: 'Charminar Heritage Monument',
-      description: 'A beautiful historic monument in your area (demo data)\n\n? Rated 4.5/5 by 8,234 visitors\n? Currently open\n?? Open now\n\n??? Tourist Attraction • Historical Landmark • Monument',
+      description: 'Charminar is a magnificent monument and mosque built in 1591. This iconic structure stands as a symbol of Hyderabad with its four grand arches and minarets. The monument showcases Indo-Islamic architecture and offers visitors a glimpse into the rich history of the Qutb Shahi dynasty.',
       latitude: latitude + 0.01,
       longitude: longitude + 0.01,
-      imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400&h=300&fit=crop',
       category: 'heritage',
       distance: '1.2km',
       googlePlacesData: {
@@ -303,10 +321,10 @@ export const getFallbackHistoricPlaces = (latitude: number, longitude: number): 
     {
       id: 'fallback-heritage-2',
       name: 'State Archaeological Museum',
-      description: 'A local heritage museum showcasing cultural artifacts (demo data)\n\n? Rated 4.2/5 by 1,456 visitors\n? Currently open\n?? Open now\n\n??? Museum • Cultural Center • Tourist Attraction',
+      description: 'The State Archaeological Museum houses an extensive collection of artifacts, sculptures, and relics that chronicle the rich cultural heritage of the region. Established to preserve and showcase archaeological treasures, the museum offers visitors an educational journey through centuries of art, culture, and history.',
       latitude: latitude - 0.01,
       longitude: longitude + 0.01,
-      imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1578495555443-d134c52754e7?w=400&h=300&fit=crop',
       category: 'heritage',
       distance: '2.1km',
       googlePlacesData: {
@@ -322,10 +340,10 @@ export const getFallbackHistoricPlaces = (latitude: number, longitude: number): 
     {
       id: 'fallback-temple-3',
       name: 'Birla Mandir Temple',
-      description: 'Historic temple with centuries of cultural heritage (demo data)\n\n? Rated 4.7/5 by 12,089 visitors\n? Currently open\n?? Open now\n\n??? Hindu Temple • Place Of Worship • Tourist Attraction',
+      description: 'Birla Mandir is a stunning Hindu temple constructed entirely of white marble and dedicated to Lord Venkateswara. Perched atop a hill, this temple combines traditional and modern architectural elements, offering devotees and visitors a serene spiritual experience along with panoramic views of the city.',
       latitude: latitude + 0.005,
       longitude: longitude - 0.005,
-      imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1583224964938-0c17db9e623a?w=400&h=300&fit=crop',
       category: 'heritage',
       distance: '800m',
       googlePlacesData: {
@@ -341,10 +359,10 @@ export const getFallbackHistoricPlaces = (latitude: number, longitude: number): 
     {
       id: 'fallback-fort-4',
       name: 'Golconda Fort',
-      description: 'Ancient fort with rich historical significance (demo data)\n\n? Rated 4.3/5 by 15,678 visitors\n?? Closed now\n\n??? Historical Landmark • Fort • Tourist Attraction',
+      description: 'Golconda Fort is a medieval fortress built by the Kakatiya dynasty and later expanded by the Qutb Shahi rulers. This imposing citadel features ingenious architecture, intricate acoustic systems, and defensive mechanisms. The fort complex offers visitors a fascinating journey through military architecture and royal history.',
       latitude: latitude - 0.005,
       longitude: longitude - 0.01,
-      imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1566127952889-bf906f4e4c5d?w=400&h=300&fit=crop',
       category: 'heritage',
       distance: '1.8km',
       googlePlacesData: {
@@ -360,10 +378,10 @@ export const getFallbackHistoricPlaces = (latitude: number, longitude: number): 
     {
       id: 'fallback-palace-5',
       name: 'Chowmahalla Palace',
-      description: 'Historic royal palace showcasing architectural heritage (demo data)\n\n? Rated 4.4/5 by 3,567 visitors\n?? Temporarily closed\n\n??? Palace • Historical Landmark • Museum',
+      description: 'Chowmahalla Palace served as the official residence of the Nizams of Hyderabad and is renowned for its exquisite architecture and royal grandeur. The palace complex showcases a blend of Persian, Turkish, and European architectural styles, featuring ornate halls, beautiful courtyards, and a remarkable collection of vintage cars and artifacts.',
       latitude: latitude + 0.008,
       longitude: longitude - 0.008,
-      imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1545042746-d0a8b69e5e22?w=400&h=300&fit=crop',
       category: 'heritage',
       distance: '2.5km',
       googlePlacesData: {
@@ -378,7 +396,7 @@ export const getFallbackHistoricPlaces = (latitude: number, longitude: number): 
     }
   ];
   
-  console.log('?? Generated enhanced fallback places:', fallbackPlaces);
+  //console.log('?? Generated enhanced fallback places:', fallbackPlaces);
   return fallbackPlaces;
 };
 

@@ -32,7 +32,7 @@ export const measurePerformance = (name: string, fn: () => void) => {
   const start = performance.now();
   fn();
   const end = performance.now();
-  console.log(`${name} took ${end - start} milliseconds`);
+  //console.log(`${name} took ${end - start} milliseconds`);
 };
 
 // Preload images for better user experience
@@ -111,7 +111,7 @@ export const isTouchDevice = (): boolean => {
 export const monitorMemoryUsage = () => {
   if ('memory' in performance) {
     const memory = (performance as any).memory;
-    console.log({
+    //console.log({
       usedJSHeapSize: `${(memory.usedJSHeapSize / 1048576).toFixed(2)} MB`,
       totalJSHeapSize: `${(memory.totalJSHeapSize / 1048576).toFixed(2)} MB`,
       jsHeapSizeLimit: `${(memory.jsHeapSizeLimit / 1048576).toFixed(2)} MB`,

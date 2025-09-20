@@ -289,26 +289,26 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onLocationSelect }) => {
 
   // Function to load historic places based on location (now using service)
   const loadHistoricPlaces = async (latitude: number, longitude: number) => {
-    console.log('🎯 HomeScreen: Starting to load historic places for:', { latitude, longitude });
+    //console.log('🎯 HomeScreen: Starting to load historic places for:', { latitude, longitude });
     setLoadingPlaces(true);
     
     try {
-      console.log('📞 HomeScreen: Calling fetchHistoricPlacesWithCORS...');
+      //console.log('📞 HomeScreen: Calling fetchHistoricPlacesWithCORS...');
       const fetchedPlaces = await fetchHistoricPlacesWithCORS(latitude, longitude);
-      console.log('✅ HomeScreen: Received places:', fetchedPlaces);
+      //console.log('✅ HomeScreen: Received places:', fetchedPlaces);
       
       setHistoricPlaces(fetchedPlaces);
-      console.log(`📊 HomeScreen: Set ${fetchedPlaces.length} historic places in state`);
+      //console.log(`📊 HomeScreen: Set ${fetchedPlaces.length} historic places in state`);
     } catch (error) {
       console.error('💥 HomeScreen: Failed to load historic places:', error);
       // Fallback to demo data if service fails
-      console.log('🔄 HomeScreen: Using fallback data...');
+      //console.log('🔄 HomeScreen: Using fallback data...');
       const fallbackPlaces = getFallbackHistoricPlaces(latitude, longitude);
       setHistoricPlaces(fallbackPlaces);
-      console.log('📍 HomeScreen: Set fallback places:', fallbackPlaces);
+      //console.log('📍 HomeScreen: Set fallback places:', fallbackPlaces);
     } finally {
       setLoadingPlaces(false);
-      console.log('✅ HomeScreen: Finished loading places');
+      //console.log('✅ HomeScreen: Finished loading places');
     }
   };
 
@@ -322,13 +322,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onLocationSelect }) => {
 
   // Update map center and load places when user location is available
   useEffect(() => {
-    console.log('🔄 HomeScreen: useEffect triggered with userLocation:', userLocation);
+    //console.log('🔄 HomeScreen: useEffect triggered with userLocation:', userLocation);
     if (userLocation) {
-      console.log('📍 HomeScreen: Setting map center and loading places...');
+      //console.log('📍 HomeScreen: Setting map center and loading places...');
       setMapCenter([userLocation.latitude, userLocation.longitude]);
       loadHistoricPlaces(userLocation.latitude, userLocation.longitude);
     } else {
-      console.log('⏳ HomeScreen: No user location yet, waiting...');
+      //console.log('⏳ HomeScreen: No user location yet, waiting...');
     }
   }, [userLocation]);
 
