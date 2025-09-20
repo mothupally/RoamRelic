@@ -12,6 +12,16 @@ export interface Location {
   audioDuration?: string;
   category: 'heritage' | 'monument' | 'museum' | 'park' | 'other';
   distance?: string;
+  // Enhanced Google Places data
+  googlePlacesData?: {
+    rating?: number;
+    userRatingsTotal?: number;
+    businessStatus?: string;
+    openNow?: boolean;
+    types?: string[];
+    formattedAddress?: string;
+    vicinity?: string;
+  };
 }
 
 export interface CivicAction {

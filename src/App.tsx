@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Location, NavigationItem, AudioTrack, CivicAction } from './types';
-import BottomNavigation from './components/BottomNavigation';
 import HomeScreen from './screens/HomeScreen';
 import POIDetailScreen from './screens/POIDetailScreen';
 import AudioPlayerScreen from './screens/AudioPlayerScreen';
@@ -229,8 +228,8 @@ const AppContent: React.FC = () => {
     </div>
   );
 
-  // Show bottom navigation on main screens only
-  const showBottomNav = ['/', '/audio', '/video', '/civic', '/profile'].includes(location.pathname);
+  // Show bottom navigation on main screens only - REMOVED FOR CLEANER INTERFACE
+  const showBottomNav = false; // Disabled bottom navigation entirely
 
   return (
     <div className="app-container">
@@ -310,7 +309,7 @@ const AppContent: React.FC = () => {
         />
       </Routes>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation - REMOVED FOR CLEANER INTERFACE
       {showBottomNav && (
         <BottomNavigation
           items={navigationItems}
@@ -318,6 +317,7 @@ const AppContent: React.FC = () => {
           onItemClick={handleNavigation}
         />
       )}
+      */}
     </div>
   );
 };

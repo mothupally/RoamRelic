@@ -149,11 +149,117 @@ const POIDetailScreen: React.FC<POIDetailScreenProps> = ({
             <h1 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '8px' }}>
               {location.name}
             </h1>
-            {location.distance && (
-              <div style={{ color: '#666', fontSize: '0.875rem', marginBottom: '16px' }}>
-                📍 {location.distance}
+            
+            {/* Google Places Rating and Status */}
+            {location.googlePlacesData && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '12px' }}>
+                {/* Rating */}
+                {location.googlePlacesData.rating && (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '4px',
+                    background: '#fff3cd',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    fontSize: '0.8rem'
+                  }}>
+                    <span>⭐</span>
+                    <span style={{ fontWeight: '600' }}>
+                      {location.googlePlacesData.rating}
+                    </span>
+                    {location.googlePlacesData.userRatingsTotal && (
+                      <span style={{ color: '#666' }}>
+                        ({location.googlePlacesData.userRatingsTotal.toLocaleString()})
+                      </span>
+                    )}
+                  </div>
+                )}
+                
+                {/* Open/Closed Status */}
+                {location.googlePlacesData.openNow !== undefined && (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '4px',
+                    background: location.googlePlacesData.openNow ? '#d4edda' : '#f8d7da',
+                    color: location.googlePlacesData.openNow ? '#155724' : '#721c24',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    fontSize: '0.8rem',
+                    fontWeight: '500'
+                  }}>
+                    <span>{location.googlePlacesData.openNow ? '🟢' : '🔴'}</span>
+                    <span>{location.googlePlacesData.openNow ? 'Open Now' : 'Closed'}</span>
+                  </div>
+                )}
+                
+                {/* Business Status */}
+                {location.googlePlacesData.businessStatus && location.googlePlacesData.businessStatus !== 'OPERATIONAL' && (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '4px',
+                    background: '#f8d7da',
+                    color: '#721c24',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    fontSize: '0.8rem',
+                    fontWeight: '500'
+                  }}>
+                    <span>⚠️</span>
+                    <span>
+                      {location.googlePlacesData.businessStatus === 'CLOSED_TEMPORARILY' ? 'Temp. Closed' :
+                       location.googlePlacesData.businessStatus === 'CLOSED_PERMANENTLY' ? 'Permanently Closed' :
+                       location.googlePlacesData.businessStatus}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
+            
+            {/* Distance */}
+            {location.distance && (
+              <div style={{ color: '#666', fontSize: '0.875rem', marginBottom: '12px' }}>
+                📍 {location.distance}
+                {location.googlePlacesData?.formattedAddress && (
+                  <span style={{ marginLeft: '8px', color: '#888' }}>
+                    • {location.googlePlacesData.formattedAddress}
+                  </span>
+                )}
+              </div>
+            )}
+            
+            {/* Place Types as Tags */}
+            {location.googlePlacesData?.types && (
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {location.googlePlacesData.types
+                    .filter(type => 
+                      !type.includes('establishment') && 
+                      !type.includes('point_of_interest') &&
+                      !type.includes('geocode')
+                    )
+                    .slice(0, 4)
+                    .map(type => (
+                      <span
+                        key={type}
+                        style={{
+                          background: '#e8f4fd',
+                          color: '#1e88e5',
+                          padding: '4px 8px',
+                          borderRadius: '8px',
+                          fontSize: '0.75rem',
+                          fontWeight: '500'
+                        }}
+                      >
+                        {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </span>
+                    ))}
+                </div>
+              </div>
+            )}
+            
             <p style={{ lineHeight: '1.6', color: '#444', fontSize: '1rem' }}>
               {location.description}
             </p>
