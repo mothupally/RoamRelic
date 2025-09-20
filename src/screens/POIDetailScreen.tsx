@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Location } from '../types';
 import Header from '../components/Header';
 import MediaCapture from '../components/MediaCapture';
+import GuideComponent from '../components/GuideComponent';
 
 interface POIDetailScreenProps {
   location: Location;
@@ -307,6 +308,17 @@ const POIDetailScreen: React.FC<POIDetailScreenProps> = ({
               </div>
             </div>
           )}
+
+          {/* Interactive Guide section */}
+          <div className="card" style={{ marginBottom: '20px' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', fontWeight: '600' }}>
+              🏛️ Interactive Historical Guide
+            </h3>
+            <div style={{ color: '#666', fontSize: '0.875rem', marginBottom: '16px' }}>
+              Get personalized historical insights and stories about {location.name} through our AI guide.
+            </div>
+            <GuideComponent touristPlace={location.name} />
+          </div>
 
           {/* Expandable Key Locations */}
           {keyLocations && keyLocations.length > 0 && (
