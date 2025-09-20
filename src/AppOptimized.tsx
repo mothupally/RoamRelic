@@ -72,7 +72,7 @@ const AppContent: React.FC = () => {
   // Handle civic action selection
   const handleCivicActionSelect = (action: CivicAction) => {
     // In a real app, this would handle the specific action
-    console.log('Civic action selected:', action);
+    //console.log('Civic action selected:', action);
     
     // For demo purposes, show an alert
     switch (action.type) {

@@ -12,6 +12,42 @@ export interface Location {
   audioDuration?: string;
   category: 'heritage' | 'monument' | 'museum' | 'park' | 'other';
   distance?: string;
+  // Enhanced Google Places data
+  googlePlacesData?: {
+    rating?: number;
+    userRatingsTotal?: number;
+    businessStatus?: string;
+    openNow?: boolean;
+    types?: string[];
+    formattedAddress?: string;
+    vicinity?: string;
+  };
+}
+
+export interface KeyLocation {
+  name: string;
+  description: string;
+}
+
+export interface CivicEngagement {
+  title: string;
+  description: string;
+  year: string;
+  type: string;
+}
+
+export interface CurrentOpportunity {
+  title: string;
+  description: string;
+  type: string;
+  link: string;
+}
+
+export interface HistoricalInsights {
+  landmark: string;
+  keyLocations: KeyLocation[];
+  civicEngagements: CivicEngagement[];
+  currentOpportunities: CurrentOpportunity[];
 }
 
 export interface CivicAction {
